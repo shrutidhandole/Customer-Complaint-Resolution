@@ -1,0 +1,585 @@
+<font color='blue' size=5><b>Mini Project 2 – </b></font><font color='blue' size=5.5><b><u>Consumer Complaint Resolution
+    Analysis Using Python</u></b></font>
+### Technique 1
+#### Insights indicated(**********)
+
+##### Scenario: 
+    Product review is the most basic function/factor in resolving customer issues and increasing the sales growth of any product. We can understand their mindset toward our service without asking each customer. When consumers are unhappy with some aspect of a business, they reach out to customer service and might raise a complaint. Companies try their best to resolve the complaints that they receive. However, it might not always be possible to appease every customer. So  Here, we will analyze data, and with the help of different algorithms, we are finding the best classification of customer category so that we can predict our test data. 
+
+#### Objective: 
+    Use Python libraries such as Pandas for data operations, Seaborn and Matplotlib for data visualization and EDA tasks, Sklearn for model building and performance visualization, and based on the best model, make a prediction for the test file and save the output. 
+? The main objective is to predict whether our customer is disputed or not with the help of given data. 
+
+# Importing libraries
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+%matplotlib inline
+import seaborn as sns
+from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import LabelEncoder
+from sklearn.decomposition import PCA
+from sklearn.model_selection import train_test_split
+import warnings
+warnings.filterwarnings("ignore")
+
+<font color='red' size=4><b><u>• Task 1 : Read the Data from the Given csv file.</u></b></font>
+
+# Load and read the dataset both train and test
+df_train = pd.read_csv("Consumer_Complaints_train.csv")
+df_test =pd.read_csv("Consumer_Complaints_test.csv")
+
+# Display the train file
+df_train.head()
+
+# Display the test file with first five rows(using head function)
+df_test.head()
+
+#### **********With the above code read both the dataset train and test and store into the variable df_train and df_test.
+
+<font color='red' size=4><b><u>• Task 2:  Check the data type for both data (test file and train file) </u></b></font>
+
+# Check the datatype of train file
+print("1. Shape of Train dataset :- ", df_train.shape)
+
+print("...............................................................")
+print("2. Datatypes of Train dataset :- ")
+print()
+print(df_train.dtypes)
+print()
+print("...............................................................")
+print("3. All other information of train dataset :- ")
+print()
+print(df_train.info())
+
+### *******The train dataset has
+    1 Total_rows = 358810
+    2 Total_columns = 18
+
+# Check the datatypes of test files
+print("1. Shape of Train dataset :- ", df_test.shape)
+
+print("...............................................................")
+print("2. Datatypes of Train dataset :- ")
+print()
+print(df_test.dtypes)
+print()
+print("...............................................................")
+print("3. All other information of train dataset :- ")
+print()
+print(df_test.info())
+
+### *****The test dataset has
+    1 Total_rows = 119606
+    2 Total_columns = 17
+
+# Concating both the train and test dataframes for the further analysis
+concat_df = pd.concat([df_train, df_test],ignore_index=True)
+
+# Shape of the Concatenated file
+print("Shape of concat_df = ",concat_df.shape)
+# Display the concatenated file 
+concat_df.head(2)
+
+#### ******** Using above code, Concatenating both the Train and Test Dataframes in one for further Analysis
+
+<font color='red' size=3><b><u>•Task 3: Do missing value analysis and drop columns where more than 25% of data are missing</u> </b></font>
+
+#Another Method of removing NaN ......................................Extra Step.
+'''missing_values = concat_df.isnull().sum()
+missing_percentage = (missing_values/len(concat_df))*100
+print(missing_percentage)
+
+columns_to_drop = missing_percentage[missing_percentage > 25].index
+print(columns_to_drop)
+
+concat_df.drop(columns=columns_to_drop,inplace=True)'''
+
+# Calculating Null Count and Percentage of data
+null_per = concat_df.isnull().sum()/concat_df.shape[0]
+
+df = pd.DataFrame({"count" : concat_df.isnull().sum(), "percentage" : round((concat_df.isnull().sum()/concat_df.shape[0]),2)})
+df
+
+# Removing NAN
+# Extract the columns which contain more than 25% of null data in form of list using for loop
+drop_col=[]
+for col in concat_df.columns :
+    null_per = round(concat_df[col].isnull().sum()/concat_df.shape[0],2)
+    if null_per > 0.25:
+        drop_col.append(col)
+        
+print("Columns contain more than 25% of null data : - ")        
+print("\n",drop_col)
+
+# After extracting drop the columns with more nan data
+concat_df.drop(drop_col, axis=1, inplace=True)
+
+print("The shape of concatenated dataframe after dropping columns which containd more than 25% Nan  : ")
+print(concat_df.shape)
+
+#### ********As Drop that columns which contain more than 25% null data from Concated dataframe (observe using reduce the col count  also)
+
+<font color='red' size=3><b><u>• Task 4: Extracting Day, Month, and Year from Date Received Column and create new fields for a
+    month, year, and day </u></b></font>
+
+# For Concatenated dataset
+
+# Convert datatype of "Date received" column object to datetime
+concat_df["Date received"]=pd.to_datetime(concat_df["Date received"])
+
+# Display the datatype of columns in concatenated dataframe
+concat_df.dtypes
+
+# For Concatenated Dataset\
+# Extracting the day month and year from date received column
+concat_df["Day"] = concat_df["Date received"].dt.day
+concat_df["Month"] = concat_df["Date received"].dt.month
+concat_df["Year"] = concat_df["Date received"].dt.year
+
+concat_df.tail(3)
+
+#### ******** Using above code Extract the day month and year from "Date Received" column and created new column to the dataframe.
+
+<font color='red' size=3><b><u>• Task 5: Calculate the Number of Days the Complaint was with the Company and create a new
+    field as “Days held”?</u></b></font>
+
+# Display the columns in concatenated dataframe
+concat_df.columns
+
+# concatnated dataframe
+# We have two column "Date received" and "Date sent to company"
+# calculate the days that the complaint was with company by substracting
+
+# First convert datatype of "Date sent to company" from dtype 'object' to 'datetime'
+concat_df["Date sent to company"]=pd.to_datetime(concat_df["Date sent to company"])
+
+# Calculate and create the new column days held
+concat_df["Days held"] = (concat_df["Date sent to company"]-concat_df["Date received"]).dt.days
+
+# Display the concatenate dataframe after calculating the "Days Held"
+concat_df.head(2)
+
+#### ******** Calculated the no of days the complaint was with the company and create the new column 'Days held' store the days
+
+<font color='red' size=3><b><u>• Task 5: Drop "Date Received","Date Sent to Company","ZIP Code", "Complaint ID" fields</u></b></font>
+
+# Drop unnecessary columns "Date Received","Date Sent to Company","ZIP Code", "Complaint ID"
+concat_df = concat_df.drop(columns=["Date received","Date sent to company","ZIP code","Complaint ID"],axis=1)
+
+print("Shape of Concatenate df after dropping the uncessary columns : ")
+print("Total Rows : ",concat_df.shape[0])
+print("Total Columns : ",concat_df.shape[1])
+
+#### ********Drop unnecessary columns from the dataframe, are( "Date Received","Date Sent to Company","ZIP Code", "Complaint ID")
+
+<font color='red' size=3><b><u>• Task 6: Imputing Null value in “State” by Mode</u></b></font>
+
+
+# Cheking the presence of null values in State column
+concat_df.isnull().sum()
+
+#### !.......... Above can see the 'State' column having null values in the dataset ,As count calculate above
+
+# Find the mode of 'State' column
+import math 
+x = concat_df["State"].mode()
+print(x[0])
+
+# Fill the blank values with mode
+concat_df["State"].fillna(x[0],inplace=True)
+
+# After imputing values in 'State' column check the null values fill or not?
+concat_df.isna().sum()
+
+# Display the items in 'State' column to observe that all values are free from NAN and fill with mode
+print(list(concat_df["State"].values))
+
+#Another method of fill NaN...........................Extra Step. ignore
+
+# Use the simpleimputer to fill nan with mode or most_frequent
+'''impute_test = SimpleImputer(missing_values=np.nan,strategy='most_frequent')
+impute_test.fit(concat_df)
+df1_test = pd.DataFrame(impute_test.transform(concat_df), columns=['Product', 'Issue', 'Company', 'State', 'Submitted via',
+                                                                    'Company response to consumer', 'Timely response?', 'Day', 
+                                                                    'Month','Year', 'Days held'])
+
+# Checking for null values after imputing nan
+print(df1_test.isnull().sum())'''
+
+#### [******** filled nan values using mode , now the dataset is free from NAN values(The most frequent values is 'CA')],\n
+{Except Target column as we concat train and test data but the test data dont have target column so thats why here indicates NaN for test_data only...ignore for this time}
+
+<font color='red' size=3><b><u>• Task 7: With the help of the days we calculated above, create a new field 'Week_Received' where
+    we calculate the week based on the day of receiving.</u></b></font>
+
+# Calculate and create 'Week Received' 
+concat_df["Week_Received"] = pd.to_datetime(concat_df[["Year","Month","Day"]]).dt.isocalendar().week
+
+# Display the dataframe check 'Week_Received ' is calculated
+concat_df.head(2)
+
+#### *******Calculate the 'Week Received' and store the result by creating new column into previous dataframe
+
+<font color='red' size=3><b><u>• Task 8: store data of disputed people into the “disputed_cons” variable for future tasks</u></b></font>
+
+# Calculating all the data where the consumer found disputed and store into new variable
+disputed_cust = concat_df[concat_df["Consumer disputed?"] == "Yes"]
+disputed_cust.head(2)
+
+#### ********Filter the DataFrame where "Consumer Disputed?" is 'Yes' and store it in the "disputed_cons" variable.
+
+<font color='red' size=3><b><u>• Task 9: Plot bar graph of the total no of disputes of consumers with the help of seaborn</u></b></font>
+
+plt.figure(figsize=(7,4))
+sns.countplot(x="Consumer disputed?", data=concat_df)
+plt.title("Total No Of Disputes of Consumers", fontweight='bold',color='brown',size=20)
+plt.show()
+
+concat_df["Consumer disputed?"].value_counts()
+
+#### ********The Total number of consumers disputed is 76172 visualize using seaborn countplot
+
+<font color='red' size=3><b><u>• Task 10: Plot bar graph of the total no of disputes products-wise with the help of seaborn</u></b></font>
+
+plt.figure(figsize=(15,6))
+sns.countplot(data=concat_df,x="Product",hue="Consumer disputed?",palette='viridis')
+plt.title("Total No Of Disputes of Consumers", fontweight='bold',color='brown',size=30)
+plt.yticks(np.arange(0,95000,10000))
+plt.xticks(rotation=45,ha='right')
+plt.xlabel("Products",fontweight='bold',color='k',size=15)
+plt.ylabel("Count",fontweight='bold',color='k',size=15)
+plt.show()
+
+#### ********As Observed maximum customer disputed with using product 'Mortgage'
+
+<font color='red' size=3><b><u>• Task 11: Plot bar graph of the total no of disputes with Top Issues by Highest Disputes, with the
+    help of seaborn</u></b></font>
+
+Issues_highest_disputes = disputed_cust.groupby("Issue")["Consumer disputed?"].count().sort_values(ascending=False)
+
+top_10_issues = Issues_highest_disputes.head(10)
+
+top_10_issues
+
+plt.figure(figsize=(20,8))
+sns.barplot(x=top_10_issues.index,y=top_10_issues.values,palette='plasma')
+plt.title("Top 10 Issues By Highest Disputes of Consumers", fontweight='bold',color='brown',size=30)
+plt.yticks(np.arange(0,14500,1000))
+plt.xticks(rotation=45,ha='right')
+plt.xlabel("Issues",fontweight='bold',color='k',size=15)
+plt.ylabel("Count",fontweight='bold',color='k',size=15)
+plt.grid(axis='y',linestyle="--",color="gray",alpha=0.5)
+plt.show()
+
+<font color='red' size=3><b><u>• Task 12: Plot bar graph of the total no of disputes by State with Maximum Disputes</u></b></font>
+
+State_highest_disputes = disputed_cust.groupby("State")["Consumer disputed?"].count().sort_values(ascending=False)
+top_10_State = State_highest_disputes.head(10)
+top_10_State
+
+plt.figure(figsize=(20,6))
+sns.barplot(x=top_10_State.index,y=top_10_State.values,palette='bwr',label="Disputes")
+plt.title("Top 10 State By Highest Disputes of Consumers", fontweight='bold',color='brown',size=30)
+plt.yticks(np.arange(0,13500,1500))
+plt.xticks(rotation=45,ha='right')
+plt.xlabel("State's",fontweight='bold',color='k',size=15)
+plt.ylabel("Count",fontweight='bold',color='k',size=15)
+plt.grid(axis='y',linestyle="--",color="y",alpha=0.3)
+plt.legend()
+plt.show()
+
+<font color='red' size=3><b><u>• Task 13: Plot bar graph of the total no of disputes Submitted Via different source</u></b></font>
+
+disputes_source = disputed_cust.groupby("Submitted via")["Consumer disputed?"].count().sort_values(ascending=False)
+
+disputes_source
+
+plt.figure(figsize=(15,6))
+ax = sns.countplot(data=disputed_cust,x="Submitted via",palette='inferno',saturation=0.9,width=0.6,label=disputes_source.index)
+ax.bar_label(ax.containers[0])
+plt.title("No Of Disputes of Consumers Submitted via Sources", fontweight='bold',color='brown',size=30)
+plt.yticks(np.arange(0,57000,4000))
+plt.xlabel("Sources",fontweight='bold',color='k',size=15)
+plt.ylabel("Count",fontweight='bold',color='k',size=15)
+plt.legend()
+plt.show()
+
+<font color='red' size=3><b><u>• Task 14: Plot bar graph of the total no of disputes where the Company's Response to the
+    Complaints</u></b></font>
+
+disputes_response = disputed_cust.groupby("Company response to consumer")["Consumer disputed?"].count()
+
+disputes_response
+
+plt.figure(figsize=(15,6))
+ax = sns.barplot(x=disputes_response.index,y=disputes_response.values,width=0.6,palette="hsv",errcolor='blue',label=disputes_response.index, saturation=0.6)
+ax.bar_label(ax.containers[0])
+plt.ylabel("Count",fontweight='bold',color='k',size=15)
+plt.xlabel("Company response to consumer",fontweight='bold',color='k',size=15)
+plt.xticks(rotation=45,ha='right')
+plt.title("Company's Response to the Complaints(disputed consumers)", fontweight='bold',color='brown',size=20)
+plt.legend()
+plt.show()
+
+<font color='red' size=3><b><u>• Task 15: Plot bar graph of the total no of disputes where the Company's Response Leads to
+    Disputes</u></b></font>
+
+plt.figure(figsize=(15,6))
+ax = sns.barplot(x=disputes_response.index,y=disputes_response.values,width=0.6,palette="inferno",errcolor='blue',label=disputes_response.index, saturation=0.6)
+ax.bar_label(ax.containers[0])
+plt.ylabel("Disputes",fontweight='bold',color='k',size=15)
+plt.xlabel("Company responce Leads",fontweight='bold',color='k',size=15)
+plt.xticks(rotation=45,ha='right')
+plt.title("Company's Response Leads to disputes", fontweight='bold',color='brown',size=20)
+plt.legend()
+plt.show()
+
+<font color='red' size=3><b><u>• Task 16: Plot bar graph of the total no of disputes. Whether there are Disputes Instead of Timely
+    Response</u></b></font>
+
+disputes_Companyresponse = disputed_cust.groupby("Timely response?")["Consumer disputed?"].count()
+
+disputes_Companyresponse
+
+# Bar plot
+plt.figure(figsize=(6,4))
+sns.barplot(x=disputes_Companyresponse.values,y=disputes_Companyresponse.index,width=0.6,orient="h")
+plt.xlabel("No of disputes",color='k',size=10)
+plt.title("Company Response Leads to disputes", fontweight='bold',color='brown',size=15)
+plt.show()
+
+<font color='red' size=3><b><u>• Task 17: Plot bar graph of the total no of disputes over Year Wise Complaints</u></b></font>
+
+disputes_year_compaints = disputed_cust.groupby("Year")["Issue"].count()
+
+disputes_year_compaints
+
+plt.figure(figsize=(15,6))
+ax = sns.barplot(x=disputes_year_compaints.index,y=disputes_year_compaints.values,width=0.6,palette="twilight_shifted",edgecolor='black',label=disputes_year_compaints.index, saturation=0.6)
+ax.bar_label(ax.containers[0],label_type='center')
+plt.ylabel("Disputes consumer Complaints",fontweight='bold',color='k',size=15)
+plt.xlabel("Years",fontweight='bold',color='k',size=15)
+plt.xticks(rotation=45,ha='right')
+plt.title("Total no of disputes over Year Wise Complaints", fontweight='bold',color='brown',size=20)
+plt.legend(loc="upper left",title="Years")
+plt.show()
+
+<font color='red' size=3><b><u>• Task 18: Plot bar graph of the total no of disputes over Year Wise Disputes</u></b></font>
+
+disputes_per_year = disputed_cust.groupby("Year")["Consumer disputed?"].count().sort_values(ascending=False)
+
+disputes_per_year
+
+plt.figure(figsize=(15,6))
+ax = sns.barplot(x=disputes_per_year.index,y=disputes_per_year.values,width=0.6,palette="RdYlBu",edgecolor='gray',label=disputes_per_year.index, saturation=0.6)
+ax.bar_label(ax.containers[0],label_type='center')
+plt.ylabel("Disputes consumer Complaints",fontweight='bold',color='k',size=15)
+plt.xlabel("Years",fontweight='bold',color='k',size=15)
+plt.xticks(rotation=45,ha='right')
+plt.title("Total no of disputes over Year Wise Disputes", fontweight='bold',color='brown',size=20)
+plt.legend(loc="upper left",title="Years")
+plt.show()
+
+<font color='red' size=3><b><u>• Task 19: Plot bar graph of Top Companies with Highest Complaints</u></b></font>
+
+companies_high_complaints = concat_df.groupby("Company")["Issue"].count().sort_values(ascending=False)
+top_10_company_highestcompaints = companies_high_complaints.head(10)
+top_10_company_highestcompaints
+
+plt.figure(figsize=(20,8))
+ax = sns.barplot(x=top_10_company_highestcompaints.index,y=top_10_company_highestcompaints.values,width=0.6,palette="hot",edgecolor='gray',label=top_10_company_highestcompaints.index, saturation=0.6)
+ax.bar_label(ax.containers[0],label_type='edge')
+plt.ylabel("Consumer Complaints",fontweight='bold',color='k',size=20)
+plt.xlabel("Companies",fontweight='bold',color='k',size=20)
+plt.xticks(rotation=45,ha='right')
+plt.title("Top_10 Companies with Highest Complaints", fontweight='bold',color='brown',size=30)
+plt.legend(loc="upper right",title="Companies")
+plt.grid(True,axis="y",linestyle="--",alpha=0.3)
+plt.show()
+
+<font color='red' size=3><b><u>• Task 20: Convert all negative days held to zero (it is the time taken by the authority that can't be
+    negative)</u></b></font>
+
+concat_df.head(1)
+
+# Convert all negative days to 0 using lambda(It compare the each value with 0 , which is max if x is max then it return original values if not the, return 0)
+concat_df["Days held"] = concat_df["Days held"].apply(lambda x : max(x,0))
+
+print(list(concat_df["Days held"].values))
+
+<font color='red' size=3><b><u>• Task 21: Drop Unnecessary Columns for the Model Building
+    like:'Company', 'State', 'Year_Received', 'Days_held'</u></b></font>
+
+concat_df_clean = concat_df.drop(["Company","State","Days held","Year"],axis=1)
+
+concat_df_clean.head(2)
+
+#### ********With the above code drop the unnecessary columns which are not required for model building
+
+# Detecting outliers
+plt.figure(figsize=(8,5))
+sns.boxplot(concat_df_clean)
+plt.title("Detecting outliers using Box plot")
+plt.show()
+
+#### ********Above numerical data does not contain outliers
+
+<font color='red' size=3><b>• Task 22: Change Consumer Disputed Column to 0 and 1(yes to 1, and no to 0)</b></font>
+
+# To build the model we use the target variable as it is a categorical column
+print("Categories of Target variable :-")
+print(concat_df_clean["Consumer disputed?"].value_counts())
+
+# Unique values in target variable
+print("\nUnique values : ",concat_df_clean["Consumer disputed?"].unique())
+
+# Change Consumer Disputed Column to 0 and 1(yes to 1, and no to 0)
+concat_df_clean["Consumer disputed?"] = concat_df_clean["Consumer disputed?"].map({"Yes":1,"No":0})
+# print the train dataset
+concat_df_clean.head()
+
+# Handling the Nan Values in the Target variable
+
+# Calculate the percentage of missing value
+missing_per_target = (concat_df_clean["Consumer disputed?"].isnull().sum()/len(concat_df_clean) *100)
+print("Missing value percentage in target : ",missing_per_target)
+
+# Impute the missing values using mode
+calculate_mode = concat_df_clean["Consumer disputed?"].mode()[0]
+print("Target Mode Value : ",calculate_mode)
+concat_df_clean["Consumer disputed?"].fillna(calculate_mode,inplace=True)
+
+#### ********The target variable are encoded into 0 and 1 (binary)
+
+concat_df_clean["Consumer disputed?"].unique()
+
+<font color='red' size=3><b>• Task 23: Create Dummy Variables for categorical features and concat with the original data frame
+like: 'Product,’ 'Submitted via,’ 'Company response to consumer,’ 'Timely response?'</b></font>
+
+# Handling categorical values using get_dummies
+dummy_var = pd.get_dummies(data=concat_df_clean,columns=["Product","Submitted via","Company response to consumer",
+                                                  "Timely response?"],dtype=int)
+# storing result to dataframe
+concat_df_encoded = pd.DataFrame(dummy_var)
+# Display the encoded dataframe
+concat_df_encoded.head()
+
+labelencoder = LabelEncoder()
+concat_df_encoded["Issue"] = labelencoder.fit_transform(concat_df_encoded["Issue"])
+concat_df_encoded.head(2)
+
+<font color='red' size=3><b><u>• Task 24: Scaling the Data Sets (note: discard dependent variable before doing standardization)
+    and Make feature Selection with the help of PCA up to 80% of the information.</u></b></font>
+
+# Separate the features and target
+X = concat_df_encoded.drop("Consumer disputed?",axis=1)
+y = concat_df_encoded["Consumer disputed?"]
+
+# Scale the features
+scale = StandardScaler().fit(X)
+X_scaled = pd.DataFrame(scale.transform(X))
+X_scaled.columns = X.columns
+
+# Performing Principal Component Analysis (PCA) on Features 
+pca = PCA(n_components=0.8)  # Retain 80% of information
+X_pca = pca.fit_transform(X_scaled)
+
+# Get the features selected by pca
+print("Number of PCA Component Selected :- ",pca.n_components_)
+
+# Converted pca back to the dataframe
+X_pca_df = pd.DataFrame(X_pca,columns=[f"PC{i}" for i in range(1,pca.n_components_ +1)])
+
+# add target variable to pca df
+X_pca_df["Consumer disputed?"] = y.reset_index(drop=True)
+
+pca_df = X_pca_df
+
+# Display the pca_df with target
+pca_df.head(2)
+
+<font color='red' size=3><b><u>• Task 25: Splitting the Data Sets Into X and Y by the dependent and independent variables (data
+selected by PCA)</u></b></font>
+
+Separate the train_df and test_df from concat_df(pca) on basis of target variable (test_df dont have the target variable implement in code .observe above using the columns names and shape of test_df)
+
+x = pca_df.drop("Consumer disputed?",axis=1)
+y = pca_df["Consumer disputed?"]
+
+x_train,x_test,y_train,y_test = train_test_split(x,y,test_size=0.30,random_state=None)
+
+print("x_train :",x_train.shape)
+print("y_train :",x_test.shape)
+print("x_test :",y_train.shape)
+print("y_test :",y_test.shape)
+
+<font color='red' size=3><b><u>• Task 26 : Build given models and measure their test and validation accuracy:</u></b></font>
+    o LogisticRegression
+    o DecisionTreeClassifier
+    o RandomForestClassifier
+    o AdaBoostClassifier
+    o GradientBoostingClassifier
+    o KNeighborsClassifier
+    o XGBClassifier
+
+!pip install xgboost
+
+from sklearn.linear_model import LogisticRegression
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from xgboost import XGBClassifier
+from sklearn.metrics import accuracy_score
+
+models = {
+    "LogisticRegression" : LogisticRegression(),
+    "DecisionTreeClassifier" : DecisionTreeClassifier(),
+    "RandomForestClassifier" : RandomForestClassifier(),
+    "AdaBoostClassifier" : AdaBoostClassifier(),
+    "GradientBoostingClassifier" : GradientBoostingClassifier(),
+    "KNeighborsClassifier" : KNeighborsClassifier(),
+    "XGBClassifier" : XGBClassifier()
+}
+
+for name, model in models.items():
+    model.fit(x_train,y_train)
+    y_pred = model.predict(x_test)
+    accuracy = accuracy_score(y_test,y_pred)
+    print(f"{name} Accuracy : ",accuracy)
+    
+
+<font color='red' size=3><b><u>• Task 27: Whoever gives the most accurate result uses it and predicts the outcome for the test file
+and fills its dispute column so the business team can take some action accordingly.</u></b></font>
+
+# Train the model 
+logistic_reg = LogisticRegression()
+logistic_reg.fit(x_train,y_train)
+
+random_for = RandomForestClassifier()
+random_for.fit(x_train,y_train)
+
+# Evaluate the models
+y_log_pred = logistic_reg.predict(x_test)
+acc_log = accuracy_score(y_test,y_log_pred)
+
+y_ran_pred = random_for.predict(x_test)
+acc_random = accuracy_score(y_test,y_ran_pred)
+
+# Selecting best model to make prediction on x file
+best_model = logistic_reg if acc_log > acc_random else random_for
+
+# Using best model make prediction of test file
+test_file_pred = best_model.predict(x_test)
+
+# Save the prediction of test file in test file
+x_test["(Consumer Disputed?)Prediction"] = test_file_pred
+
+# Save the updated file as predicted test file
+x_test.to_csv("Predicted Test file(Consumer Complaints_2).csv",index=False)
+
+x_test["(Consumer Disputed?)Prediction"].value_counts()
+
+### **Finally Predicted using Best model Consumer disputed or not for the Test file
